@@ -1,0 +1,8 @@
+BASEDIR=$(dirname $0);
+cd $BASEDIR/repo;
+git fetch --all;
+git reset --hard origin/master;
+~/bin/themekit download --env production;
+git add .;
+git commit -m "Auto-synced changes";
+git push origin master;
