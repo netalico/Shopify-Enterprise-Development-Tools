@@ -1,8 +1,47 @@
+#!/bin/bash
+
+parse_yaml() {
+   local prefix=$2
+   local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+   sed -ne "s|^\($s\)\($w\)$s:$s\"\(.*\)\"$s\$|\1$fs\2$fs\3|p" \
+        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
+   awk -F$fs '{
+      indent = length($1)/2;
+      vname[indent] = $2;
+      for (i in vname) {if (i > indent) {delete vname[i]}}
+      if (length($3) > 0) {
+         vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+         printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
+      }
+   }'
+}
+
+
+
+
+
 BASEDIR=$(dirname $0);
 cd $BASEDIR/repo;
+eval $(parse_yaml config.yml "config_")
+config_production_webhook=${config_production_webhook%$'\r'}
+config_production_store=${config_production_store%$'\r'}
+
+
 git fetch --all;
 git reset --hard origin/master;
 ~/bin/themekit download --env production;
 git add .;
-git commit -m "Auto-synced changes";
-git push origin master;
+commit_output=$(git commit -m "Auto-synced changes";)
+
+if [[ $commit_output == *"nothing to commit"* ]]; then
+  echo "No Changes"
+else
+	echo "Changes Detected"
+	if [  -z $config_production_webhook ]; then
+		echo "don't webhook";
+	else
+		echo "do webhook";
+		curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"$config_production_store - Auto-synced changes\"}" "$config_production_webhook"
+	fi
+	git push origin master;
+fi
