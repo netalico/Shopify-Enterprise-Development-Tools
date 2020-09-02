@@ -29,7 +29,13 @@ config_production_store=${config_production_store%$'\r'}
 
 git fetch --all;
 git reset --hard origin/master;
+
+if [[ "$config_production_store" == "" ]]; then
+~/bin/themekit download --env development;
+else
 ~/bin/themekit download --env production;
+fi
+
 git add .;
 commit_output=$(git commit -m "Auto-synced changes";)
 
