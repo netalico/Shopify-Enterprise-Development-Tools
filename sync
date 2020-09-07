@@ -17,7 +17,8 @@ parse_yaml() {
 }
 
 
-
+git fetch --all;
+git reset --hard origin/master;
 
 
 BASEDIR=$(dirname $0);
@@ -27,13 +28,16 @@ config_production_webhook=${config_production_webhook%$'\r'}
 config_production_store=${config_production_store%$'\r'}
 
 
-git fetch --all;
-git reset --hard origin/master;
+
 
 if [[ "$config_production_store" == "" ]]; then
-~/bin/themekit download --env development;
+	~/bin/themekit download --env development;
+	webhook=${config_development_webhook%$'\r'}
+	store=${config_development_store%$'\r'}
 else
-~/bin/themekit download --env production;
+	~/bin/themekit download --env production;
+	webhook=${config_production_store%$'\r'}
+	store=${config_production_store%$'\r'}
 fi
 
 git add .;
@@ -47,7 +51,7 @@ else
 		echo "don't webhook";
 	else
 		echo "do webhook";
-		curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"$config_production_store - Auto-synced changes\"}" "$config_production_webhook"
+		curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"$store - Auto-synced changes\"}" "$webhook"
 	fi
 	git push origin master;
 fi
