@@ -17,12 +17,14 @@ parse_yaml() {
 }
 
 
-git fetch --all;
-git reset --hard origin/master;
+
 
 
 BASEDIR=$(dirname $0);
 cd $BASEDIR/repo;
+git fetch --all;
+git reset --hard origin/master;
+
 eval $(parse_yaml config.yml "config_")
 config_production_webhook=${config_production_webhook%$'\r'}
 config_production_store=${config_production_store%$'\r'}
